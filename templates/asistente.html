@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente de Voz Virtual</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            animation: gradientShift 15s ease infinite;
+            background-size: 200% 200%;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(30, 35, 48, 0.85);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .chat-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        .chat-header {
+            text-align: center;
+            color: #fff;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        .chat-header::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #4285f4, #34a853);
+            margin: 10px auto;
+            border-radius: 3px;
+        }
+        #chatBox {
+            height: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            background: rgba(20, 25, 38, 0.6);
+            scrollbar-width: thin;
+            scrollbar-color: #4285f4 transparent;
+        }
+        #chatBox::-webkit-scrollbar {
+            width: 6px;
+        }
+        #chatBox::-webkit-scrollbar-thumb {
+            background-color: #4285f4;
+            border-radius: 3px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            margin: 12px 0;
+            border-radius: 18px;
+            word-wrap: break-word;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInUp 0.3s ease forwards;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .user-message {
+            background: linear-gradient(135deg, #4285f4 0%, #3367d6 100%);
+            color: white;
+            margin-left: auto;
+            animation-delay: 0.1s;
+        }
+        .bot-message {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            margin-right: auto;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation-delay: 0.2s;
+        }
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        #userInput {
+            flex: 1;
+            padding: 14px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        #userInput:focus {
+            outline: none;
+            border-color: #4285f4;
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+            background: rgba(255, 255, 255, 0.12);
+        }
+        #userInput::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        button {
+            padding: 12px 24px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        #recordBtn {
+            background: #ea4335;
+            min-width: 100px;
+        }
+        #recordBtn:hover {
+            background: #d33426;
+        }
+        #recordBtn.recording {
+            background: #34a853;
+            animation: pulse 1.5s infinite;
+        }
+        .audio-controls {
+            margin-top: 15px;
+            text-align: center;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .status-message {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            height: 20px;
+            transition: all 0.3s ease;
+        }
+        audio {
+            width: 100%;
+            margin-top: 15px;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+        }
+        audio::-webkit-media-controls-panel {
+            background-color: rgba(30, 35, 48, 0.8);
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h1 class="chat-header">Asistente de Voz Virtual</h1>
+        <div id="chatBox">
+            <div class="message bot-message">¡Hola! Soy tu asistente de Voz Virtual. ¿En qué puedo ayudarte hoy?</div>
+        </div>
+        
+        <div class="input-wrapper">
+            <input type="text" id="userInput" placeholder="Escribe tu pregunta o graba audio..." autocomplete="off">
+            <button onclick="sendMessage()" id="sendBtn">Enviar</button>
+            <button id="recordBtn" onclick="toggleRecording()">🎤 Grabar</button>
+        </div>
+        
+        <div id="statusMessage" class="status-message" style="display: none;"></div>
+        
+        <div class="audio-controls">
+            <audio id="audioPlayer" controls></audio>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        const recordBtn = document.getElementById('recordBtn');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const statusMessage = document.getElementById('statusMessage');
+        const sendBtn = document.getElementById('sendBtn');
+        const userInput = document.getElementById('userInput');
+
+        function setStatus(message, isError = false) {
+            statusMessage.textContent = message;
+            statusMessage.style.color = isError ? '#ea4335' : 'rgba(255, 255, 255, 0.7)';
+            statusMessage.style.display = message ? 'block' : 'none';
+            if (isError) {
+                statusMessage.style.animation = 'shake 0.5s ease';
+                setTimeout(() => {
+                    statusMessage.style.animation = '';
+                }, 500);
+            }
+        }
+
+        function toggleRecording() {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        function startRecording() {
+            setStatus('Preparando micrófono...');
+            
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.textContent = '⏹ Detener';
+                    recordBtn.classList.add('recording');
+                    setStatus('Grabando... Pulsa nuevamente para detener');
+                    
+                    mediaRecorder.ondataavailable = e => {
+                        audioChunks.push(e.data);
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        sendAudioToServer(audioBlob);
+                        audioChunks = [];
+                    };
+                })
+                .catch(err => {
+                    console.error('Error al acceder al micrófono:', err);
+                    setStatus('Error: No se pudo acceder al micrófono. Asegúrate de permitir el acceso.', true);
+                    recordBtn.disabled = true;
+                });
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                isRecording = false;
+                recordBtn.textContent = '🎤 Grabar';
+                recordBtn.classList.remove('recording');
+                setStatus('Procesando audio...');
+                
+                // Detener todas las pistas de audio
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function sendAudioToServer(audioBlob) {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'audio.ogg');
+            
+            fetch('/api/transcribe', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    userInput.value = data.text;
+                    sendMessage();
+                } else {
+                    throw new Error(data.message || 'Error al transcribir audio');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                setStatus('Error: ' + (error.message || 'Error al transcribir el audio'), true);
+            });
+        }
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Deshabilitar botones durante el envío
+            sendBtn.disabled = true;
+            recordBtn.disabled = true;
+            userInput.disabled = true;
+            setStatus('Enviando mensaje...');
+
+            const chatBox = document.getElementById('chatBox');
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user-message';
+            userMessage.textContent = message;
+            chatBox.appendChild(userMessage);
+            userInput.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: message})
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    const botMessage = document.createElement('div');
+                    botMessage.className = 'message bot-message';
+                    botMessage.textContent = data.response;
+                    chatBox.appendChild(botMessage);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    
+                    // Reproducir la respuesta de audio
+                    if (data.audio_url) {
+                        audioPlayer.src = data.audio_url + '?t=' + new Date().getTime();
+                        audioPlayer.play().catch(e => {
+                            console.error('Error al reproducir audio:', e);
+                        });
+                    }
+                } else {
+                    throw new Error(data.message || 'Error en la respuesta del servidor');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                setStatus('Error: ' + (error.message || 'Error al enviar el mensaje'), true);
+            })
+            .finally(() => {
+                // Rehabilitar botones
+                sendBtn.disabled = false;
+                recordBtn.disabled = false;
+                userInput.disabled = false;
+                setStatus('');
+                userInput.focus();
+            });
+        }
+
+        // Manejar el envío con Enter
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Manejar el foco en el input
+        userInput.addEventListener('focus', () => {
+            setStatus('');
+        });
+
+        // Efecto de aparición inicial
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('.chat-container').style.opacity = '0';
+            setTimeout(() => {
+                document.querySelector('.chat-container').style.transition = 'opacity 0.5s ease';
+                document.querySelector('.chat-container').style.opacity = '1';
+            }, 100);
+        });
+    </script>
+</body>
+</html>
