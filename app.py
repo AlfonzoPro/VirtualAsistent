@@ -4,6 +4,7 @@ import os
 from gtts import gTTS
 import io
 import speech_recognition as sr
+from flask_cors import CORS
 
 app = Flask(__name__)
 #app.secret_key = os.environ.get('SECRET_KEY')
