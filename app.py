@@ -153,4 +153,5 @@ def transcribe_audio():
         }), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Usa el puerto de Render o 5000 localmente
+    app.run(host='0.0.0.0', port=port)  # ¡Clave para Render!
