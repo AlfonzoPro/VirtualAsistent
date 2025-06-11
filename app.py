@@ -9,7 +9,7 @@ app = Flask(__name__)
 app.secret_key = 'tu_clave_secreta_aqui'  # Cambia esto en producción
 
 # Configuración de Gemini
-GOOGLE_API_KEY = 'AIzaSyDwd3D2AFDF9MLzSSx7SPuHG9KVZcuQ6-M'  # Reemplaza con tu clave real
+GOOGLE_API_KEY = 'AIzaSyBNon2WMYLCQgyQWcoK8R_dzM3w1Cgc6Tw'  # Reemplaza con tu clave real
 genai.configure(api_key=GOOGLE_API_KEY)
 
 def get_chat_session():
