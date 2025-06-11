@@ -6,7 +6,10 @@ import io
 import speech_recognition as sr
 
 app = Flask(__name__)
-app.secret_key = 'tu_clave_secreta_aqui'  # Cambia esto en producción
+#app.secret_key = os.environ.get('SECRET_KEY')
+app.secret_key = 'IL4LbtIP4r'
+
+CORS(app)  # Permite solicitudes desde cualquier origen
 
 # Configuración de Gemini
 GOOGLE_API_KEY = os.environ.get(
